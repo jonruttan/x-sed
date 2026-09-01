@@ -18,6 +18,6 @@
 ; never runs, so grep's operand dispatch cannot hijack sed's argv).
 (requires-lang "grep")
 
-(requires-release "v0.9.0")
+(requires-release "v0.10.0")
 
 (entry "run.x")
