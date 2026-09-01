@@ -1,0 +1,23 @@
+; lang.xon -- what this bundle IS.
+;
+; FORMAT (one form per line):
+;   (lang "NAME")                the -l name
+;   (dialect NAME)               he | xe | rn -- a REQUIREMENT, not a taste
+;   (requires-lang "NAME")       another lang this one is written on top of
+;   (requires-release "TAG")     the x-lang this bundle was built against
+;   (entry "FILE")               loaded AFTER the dialect, not instead of it
+
+(lang "sed")
+
+; RADON for File, like the other tools of the arc.
+(dialect rn)
+
+; THE FIRST CROSS-BUNDLE REUSE: sed's regex layer IS grep's -- the BRE
+; escape-swap translator and the byte doors ride in via grep/base, which
+; x.sh arms as a LIBRARY (import paths only; a required lang's entry
+; never runs, so grep's operand dispatch cannot hijack sed's argv).
+(requires-lang "grep")
+
+(requires-release "v0.9.0")
+
+(entry "run.x")
