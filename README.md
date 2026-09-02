@@ -1,5 +1,7 @@
 # x-sed
 
+<p align="center"><img src="docs/bitwise-banner.svg" alt="x-sed, with Bitwise the owl" width="100%"></p>
+
 POSIX sed on x-lang, the third tool of the self-hosting arc -- and the
 first CROSS-BUNDLE build: `(requires-lang "grep")` arms x-grep as a
 library, so the BRE escape-swap translator, the byte doors, the line
@@ -47,3 +49,5 @@ expectation from a real sed run.
     sed/cli.x         options, files, stdin, sed-main (the exit)
     tests/            markdown specs + the platform's runner; the harness
                       arms the required grep bundle the way x.sh does
+
+<p align="center"><img src="docs/bitwise-mark.svg" alt="Bitwise" width="96"></p>
