@@ -10,7 +10,12 @@
 (lang "sed")
 
 ; RADON for File, like the other tools of the arc.
-(dialect rn)
+; HELIUM, plus exactly the libraries this bundle imports and nothing
+; ambient.  Radon is only a particular set of libraries to load, and
+; the set it loads (the numeric tower, JIT-compiled tokenizer
+; analysers) costs ~9s of every invocation that a tool never uses
+; (measured 2026-09-02; the x-coreutils manifest has the numbers).
+(dialect he)
 
 ; THE FIRST CROSS-BUNDLE REUSE: sed's regex layer IS grep's -- the BRE
 ; escape-swap translator and the byte doors ride in via grep/base, which
