@@ -27,6 +27,8 @@ install: ## Install into <share>/langs/sed
 	cp -R $(PAYLOAD) "$(DEST)/"
 	printf '%s\n' '$(LANG_VERSION)' > "$(DEST)/version"
 	@echo "x-sed: installed to $(DEST)"
+	@echo "x-sed: writing the boot image"
+	"$(X)" --image -l sed || true
 	@echo "x-sed: try  x -l sed"
 
 .PHONY: uninstall
