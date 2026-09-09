@@ -15,6 +15,6 @@
 ;   (reference "LINE")        one line in this project's own language, on the banner
 
 (costume "x-sed"
-  (rows "., .," "{OvO}" "(sed)" " \" \"")
+  (rows "., .," "{O,O}" "(sed)" " \" \"")
   (roles "ii ii" "ieifi" "iaaai" " i i ")
   (reference "s/owl/{O,O}/g"))
