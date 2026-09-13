@@ -17,10 +17,10 @@
 ; (measured 2026-09-02; the x-coreutils manifest has the numbers).
 (dialect he)
 
-; THE FIRST CROSS-BUNDLE REUSE: sed's regex layer IS grep's -- the BRE
-; escape-swap translator and the byte doors ride in via grep/base, which
-; x.sh arms as a LIBRARY (import paths only; a required lang's entry
-; never runs, so grep's operand dispatch cannot hijack sed's argv).
+; sed's regex layer is grep's: the BRE escape-swap translator and the byte
+; doors ride in via grep/base, which x.sh arms as a library (import paths only;
+; a required lang's entry never runs, so grep's operand dispatch cannot hijack
+; sed's argv).
 (requires-lang "grep")
 
 (requires-release "v0.13.0")
