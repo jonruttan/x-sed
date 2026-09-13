@@ -18,12 +18,11 @@ OUT="$BUNDLE/tests/lib/harness.gen.x"
 
 mkdir -p "$BUNDLE/tests/lib"
 
-# THE REQUIRED LANGS, READ FROM THE MANIFEST (the x-r7rs pattern): x.sh
-# resolves (requires-lang ...) itself; the harness repeats the
-# resolution from the same rows.  Both layouts are probed -- an install
-# names the directory after the lang, a checkout after the repository.
-# The version, when the row grows one, is deliberately ignored here:
-# this harness exists to run against working trees.
+# The required langs, read from the manifest: x.sh resolves (requires-lang ...)
+# itself, and the harness repeats the resolution from the same rows. Both
+# layouts are probed -- an install names the directory after the lang, a
+# checkout after the repository. The version, when a row has one, is ignored
+# here: this harness runs against working trees.
 DEP_ROOTS=
 for _req in $(sed -n 's/^(requires-lang "\([^"]*\)".*/\1/p' "$BUNDLE/lang.xon"); do
 	_root=

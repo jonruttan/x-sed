@@ -3,7 +3,7 @@
 <p align="center"><img src="docs/bitwise-banner.svg" alt="x-sed, with Bitwise the owl" width="100%"></p>
 
 POSIX sed on x-lang, the third tool of the self-hosting arc -- and the
-first CROSS-BUNDLE build: `(requires-lang "grep")` arms x-grep as a
+first cross-bundle build: `(requires-lang "grep")` arms x-grep as a
 library, so the BRE escape-swap translator, the byte doors, the line
 splitter and the stdin reclaim all ride in from there.  1,451 sed calls
 in the measured build closure (x-lang `docs/bootstrap-closure.md`).
@@ -17,7 +17,7 @@ groups; `-n`; `-e` fragments and `-f` script files; files as one stream
 loudly, recorded as pending: empty-`//` last-regex reuse, the hold
 space (h H g G x), multiline (N D P), a/i/c text, y///.
 
-Paired with x-lang v0.9.0 (`lang.xon` is the checkable row); requires
+Paired with x-lang v0.13.0 (`lang.xon` is the checkable row); requires
 the x-grep bundle beside it (or installed).
 
 ## Try it

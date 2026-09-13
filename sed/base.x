@@ -6,11 +6,10 @@
 ; @copyright 2026 Jon Ruttan
 ; @license MIT No Attribution (MIT-0)
 ;
-; THE REGEX LAYER IS GREP'S: (import grep/base) arms the escape-swap
-; translator (%grep-xlate), the byte doors, the line splitter and the
-; File wrappers -- the flat global namespace makes a required lang's
-; internals usable the moment its base is imported.  Nothing under
-; sed/ includes a platform module (x-lang#515).
+; The regex layer is grep's: (import grep/base) arms the escape-swap translator
+; (%grep-xlate), the byte doors, the line splitter and the File wrappers -- the
+; flat global namespace makes a required lang's internals usable the moment its
+; base is imported. Nothing under sed/ includes a platform module (x-lang#515).
 
 (import grep/base)
 

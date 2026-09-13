@@ -1,6 +1,6 @@
 ; # x-sed -- POSIX sed on x-lang
 ;
-; ## run.x -- THE entry
+; ## run.x -- the entry point
 ;
 ; @description A POSIX sed: addresses, s///, the cycle, on grep's regex
 ;   layer.  The third tool of the self-hosting arc.
@@ -11,9 +11,9 @@
 ; Usage:
 ;   x -l sed -- [-nE] [-e script]... [-f scriptfile]... [script] [file]...
 ;
-; THIS FILE KNOWS NO PATHS.  Operands mean "be sed" -- sed-main runs and
-; EXITS; no operands is the x REPL with the core loaded:
-; (sed-run ARGV INPUT) at a prompt.
+; This file contains no path literals. With operands, sed-main runs and exits;
+; with no operands it is the x REPL with the core loaded, (sed-run ARGV INPUT)
+; at a prompt.
 (import sed/base)
 
 (set! %lang-name "SED")
