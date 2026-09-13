@@ -119,42 +119,44 @@
     (if (>= i3 end) (%sed-perr "address without a command")
       (let ((c (byte-at s i3)))
         (def body-r
-          (if (= c 115)                                    ; s
-            (if (>= (+ i3 1) end) (%sed-perr "s needs a delimiter")
-              (let ((delim (byte-at s (+ i3 1))))
-                (def re-r (%sed-scan-delim s end delim (+ i3 2)))
-                (def repl-r (%sed-scan-delim s end delim (rest re-r)))
-                (if (= (byte-len (first re-r)) 0)
-                  (%sed-perr "empty s regex (last-regex reuse is pending)")
-                  (let ((flags (fn (self j g p occ)
-                                 (if (>= j end) (list j g p occ)
-                                   (let ((f (byte-at s j)))
-                                     (if (= f 103)          ; g
-                                       (self (+ j 1) #t p occ)
-                                       (if (= f 112)        ; p
-                                         (self (+ j 1) g #t occ)
-                                         (if (if (>= f 49) (<= f 57) #f)
-                                           (self (+ j 1) g p (- f 48))
-                                           (list j g p occ)))))))))
-                    (let ((fr (flags (rest repl-r) #f #f 1)))
-                      (pair
-                        (list (lit subst)
-                          (regex-compile
-                            (%grep-xlate (first re-r) (not ere?) #f))
-                          (%sed-parse-repl (first repl-r))
-                          (first (rest fr))
-                          (first (rest (rest fr)))
-                          (first (rest (rest (rest fr)))))
-                        (first fr)))))))
-            (if (= c 112) (pair (list (lit p)) (+ i3 1))   ; p
-              (if (= c 100) (pair (list (lit d)) (+ i3 1)) ; d
-                (if (= c 113) (pair (list (lit q)) (+ i3 1)) ; q
-                  (if (= c 123)                            ; {
-                    (let ((r (%sed-parse-cmds s end (+ i3 1) ere? #t)))
-                      (pair (list (lit block) (first r)) (rest r)))
-                    (%sed-perr
-                      (string-append "unknown command: "
-                        (%grep-b->s c)))))))))
+          (match
+            ((= c 115)                                     ; s
+              (if (>= (+ i3 1) end) (%sed-perr "s needs a delimiter")
+                (let ((delim (byte-at s (+ i3 1))))
+                  (def re-r (%sed-scan-delim s end delim (+ i3 2)))
+                  (def repl-r (%sed-scan-delim s end delim (rest re-r)))
+                  (if (= (byte-len (first re-r)) 0)
+                    (%sed-perr "empty s regex (last-regex reuse is pending)")
+                    (let ((flags (fn (self j g p occ)
+                                   (if (>= j end) (list j g p occ)
+                                     (let ((f (byte-at s j)))
+                                       (if (= f 103)          ; g
+                                         (self (+ j 1) #t p occ)
+                                         (if (= f 112)        ; p
+                                           (self (+ j 1) g #t occ)
+                                           (if (if (>= f 49) (<= f 57) #f)
+                                             (self (+ j 1) g p (- f 48))
+                                             (list j g p occ)))))))))
+                      (let ((fr (flags (rest repl-r) #f #f 1)))
+                        (pair
+                          (list (lit subst)
+                            (regex-compile
+                              (%grep-xlate (first re-r) (not ere?) #f))
+                            (%sed-parse-repl (first repl-r))
+                            (first (rest fr))
+                            (first (rest (rest fr)))
+                            (first (rest (rest (rest fr)))))
+                          (first fr))))))))
+            ((= c 112) (pair (list (lit p)) (+ i3 1)))     ; p
+            ((= c 100) (pair (list (lit d)) (+ i3 1)))     ; d
+            ((= c 113) (pair (list (lit q)) (+ i3 1)))     ; q
+            ((= c 123)                                     ; {
+              (let ((r (%sed-parse-cmds s end (+ i3 1) ere? #t)))
+                (pair (list (lit block) (first r)) (rest r))))
+            (#t
+              (%sed-perr
+                (string-append "unknown command: "
+                  (%grep-b->s c))))))
         (pair
           (list (list #f) a1 a2 neg (first body-r))
           (rest body-r))))))

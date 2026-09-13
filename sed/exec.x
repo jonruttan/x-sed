@@ -158,7 +158,10 @@
 ; the whole run: SCRIPT-CMDS over LINES; answers the exit status
 (def %sed-cycle
   (fn (_ cmds lines quiet)
-    (def total (length lines))
+    ; No `total` here.  It was `(length lines)`, computed on every run and
+    ; read by nothing -- last-line addressing asks `(null? (rest ls))` as it
+    ; walks, which is what `$` actually needs.  A list length is a full walk,
+    ; so the dead line cost one extra pass over the input each time.
     (def go
       (fn (self ls n)
         (if (null? ls) 0

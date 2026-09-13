@@ -37,7 +37,19 @@ expectation from a real sed run.
 ## Tests
 
     make test           # the suite, loud on any failure
-    make check          # judged against tests/contract/known-failures.txt
+    make lint           # this bundle's sources, through x-lang's linter
+    make check          # lint, then judged against tests/contract/known-failures.txt
+
+`make lint` shims onto the platform's lang kit and vendors nothing.  It
+**skips itself** on an x whose linter cannot arm x-grep -- the lang this
+bundle is written on top of -- which is every release up to and including
+v0.14.0; before [x-lang#689](https://github.com/jonruttan/x-lang/pull/689)
+every file here died as `include: cannot open` before a rule could run.
+
+The first clean sweep paid for itself twice: a five-arm nested-`if` ladder
+in `sed/parse.x`, now a `match`, and a dead `(length lines)` in
+`sed/exec.x` -- a whole extra pass over the input on every run, read by
+nothing.
 
 ## Layout
 
@@ -49,5 +61,6 @@ expectation from a real sed run.
     sed/cli.x         options, files, stdin, sed-main (the exit)
     tests/            markdown specs + the platform's runner; the harness
                       arms the required grep bundle the way x.sh does
+    tests/lint.sh     shims onto the lang kit's linter -- vendors nothing
 
 <p align="center"><img src="docs/bitwise-mark.svg" alt="Bitwise" width="96"></p>
