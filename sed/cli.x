@@ -6,7 +6,8 @@
 ; @copyright 2026 Jon Ruttan
 ; @license MIT No Attribution (MIT-0)
 ;
-;   x -l sed -- [-nE] [-e script]... [-f scriptfile]... [script] [file]...
+;   x -l sed -- [-nrE] [-e script]... [-f scriptfile]... [script] [file]...
+;   x -l sed -- --help
 ;
 ; The `--` lets sed's own options through x.sh's parsing (-n, -e, -f,
 ; -E all collide); without it, place options after the script.  The
@@ -15,58 +16,83 @@
 
 (def sed-argv (fn (_ raw) (grep-argv raw)))
 
-; ((quiet ere) SCRIPT-TEXT FILES): -e fragments join with newlines,
-; -f files each contribute their text, the first operand is the script
-; only when neither spoke.
+; The options, declared once: what the parse accepts, what --help prints and
+; what a refusal prints.  busybox's sed help text, less the rows for the -i
+; it does not take; -r is busybox's spelling of -E.
+(def %sed-options
+  (Opts declare "sed"
+    "[-i[SFX]] [-nrE] [-f FILE]... [-e CMD]... [FILE]...\nor: sed [-i[SFX]] [-nrE] CMD [FILE]..."
+    ()
+    (list
+      (Opts arg "-e" "CMD" "Add CMD to sed commands to be executed")
+      (Opts arg "-f" "FILE" "Add FILE contents to sed commands to be executed")
+      (Opts flag "-n" "Suppress automatic printing of pattern space")
+      (Opts flag "-r" "-E" "Use extended regex syntax")
+      (Opts text "")
+      (Opts text "If no -e or -f, the first non-option argument is the sed command string.")
+      (Opts text "Remaining arguments are input files (stdin if none)."))))
+
+; (QUIET ERE FRAGMENTS FILES), or nil when the line does not run: an option
+; sed does not take, or no script.  Options stop at the first operand, as
+; musl's getopt stops.  -e and -f fragments keep the order they were given
+; in (the parse's values list holds them in that order); a -f file
+; contributes its text.  Without either, the first operand is the script.
 (def %sed-parse-cli
-  (fn (_ operands)
+  (fn (_ argv)
+    (def o (Opts parse-leading %sed-options argv))
+    (def ops (Opts operands o))
+    (def frags
+      (fn (self vs)
+        (match
+          ((null? vs) ())
+          ((string=? (first (first vs)) "-e")
+            (pair (rest (first vs)) (self (rest vs))))
+          ((string=? (first (first vs)) "-f")
+            (pair (%sed-script-file (rest (first vs))) (self (rest vs))))
+          (#t (self (rest vs))))))
+    (def fs (frags (Assoc get (lit values) o)))
+    (match
+      ((not (null? (Opts unknown o))) ())
+      ((not (null? fs)) (list (Opts on? o "-n") (Opts on? o "-E") fs ops))
+      ((null? ops) ())
+      (#t (list (Opts on? o "-n") (Opts on? o "-E") (list (first ops)) (rest ops))))))
+
+(def %sed-script-file
+  (fn (_ path)
+    (if (file-exists? path) (file-read-all path)
+      (Err raise (lit sed) (string-append "sed: can't open script file " path) ()))))
+
+; The line refused, as busybox's sed refuses it: musl getopt's line naming the
+; option, or nothing when there was no script, then the usage text, on
+; standard error, and 1.
+(def %sed-refuse
+  (fn (_ tok)
+    (do (unless (null? tok)
+          (file-write 2 (string-concat (list "sed: " (%sed-refusal tok) "\n"))))
+        (file-write 2 (Opts usage %sed-options))
+        1)))
+
+; What is wrong with TOK, in musl getopt's words: in a short cluster, read left
+; to right, the first letter sed does not take is unrecognized, and -e or -f
+; with nothing after it requires an argument; a long option is named without
+; its dashes.
+(def %sed-refusal
+  (fn (_ tok)
+    (def end (byte-len tok))
+    (def member?
+      (fn (self s l) (if (null? l) #f (if (string=? (first l) s) #t (self s (rest l))))))
     (def go
-      (fn (self ops quiet ere frags saw?)
-        (if (null? ops)
-          (list quiet ere (reverse frags) ())
-          (let ((op (first ops)))
-            (if (if (>= (byte-len op) 2) (= (byte-at op 0) 45) #f)
-              (let ((b1 (byte-at op 1)))
-                (if (= b1 45)                              ; --
-                  (let ((tail (rest ops)))
-                    (if saw?
-                      (list quiet ere (reverse frags) tail)
-                      (if (null? tail)
-                        (Err raise (lit sed) "sed: no script" ())
-                        (list quiet ere (list (first tail)) (rest tail)))))
-                  (if (= b1 101)                           ; e
-                    (let ((r (%grep-optarg op ops)))
-                      (self (rest r) quiet ere
-                        (pair (first r) frags) #t))
-                    (if (= b1 102)                         ; f
-                      (let ((r (%grep-optarg op ops)))
-                        (if (file-exists? (first r))
-                          (self (rest r) quiet ere
-                            (pair (file-read-all (first r)) frags) #t)
-                          (Err raise (lit sed)
-                            (string-append "sed: can't open script file "
-                              (first r))
-                            ())))
-                      ; bundled -nE
-                      (let ((bundle
-                              (fn (self2 i q e)
-                                (if (>= i (byte-len op)) (pair q e)
-                                  (let ((b (byte-at op i)))
-                                    (if (= b 110)          ; n
-                                      (self2 (+ i 1) #t e)
-                                      (if (= b 69)         ; E
-                                        (self2 (+ i 1) q #t)
-                                        (Err raise (lit sed)
-                                          (string-append
-                                            "sed: unknown option: " op)
-                                          ()))))))))
-                        (let ((qe (bundle 1 quiet ere)))
-                          (self (rest ops) (first qe) (rest qe)
-                            frags saw?)))))))
-              (if (if saw? #t (not (null? frags)))
-                (list quiet ere (reverse frags) ops)
-                (self (rest ops) quiet ere (pair op frags) #t)))))))
-    (go operands #f #f () #f)))
+      (fn (self i)
+        (let ((opt (string-append "-" (substring tok i (+ i 1)))))
+          (match
+            ((>= i end) (string-append "unrecognized option: " (substring tok 1 end)))
+            ((member? opt (Opts valued %sed-options))
+              (string-append "option requires an argument: " (substring tok i (+ i 1))))
+            ((member? opt (Opts flags %sed-options)) (self (+ i 1)))
+            (#t (string-append "unrecognized option: " (substring tok i (+ i 1))))))))
+    (if (if (> end 2) (= (byte-at tok 1) #\-) #f)
+      (string-append "unrecognized option: " (substring tok 2 end))
+      (go 1))))
 
 (def %sed-join-frags
   (fn (self fs)
@@ -80,14 +106,17 @@
 ; ONE stream (line numbers continue, $ is the overall last line).
 (def sed-run
   (fn (_ argv input)
-    (def plan (%sed-parse-cli argv))
-    (def quiet (first plan))
-    (def ere (first (rest plan)))
-    (def frags (first (rest (rest plan))))
-    (def files (first (rest (rest (rest plan)))))
-    (if (null? frags)
-      (do (file-write 2 "usage: sed [-nE] [-e script]... [-f scriptfile]... [script] [file]...\n")
-          1)
+    (def plan (if (Opts help? %sed-options argv) () (%sed-parse-cli argv)))
+    (def quiet (if (null? plan) #f (first plan)))
+    (def ere (if (null? plan) #f (first (rest plan))))
+    (def frags (if (null? plan) () (first (rest (rest plan)))))
+    (def files (if (null? plan) () (first (rest (rest (rest plan))))))
+    (match
+      ((Opts help? %sed-options argv)
+        (do (file-write 1 (Opts usage %sed-options)) 0))
+      ((null? plan)
+        (%sed-refuse (Opts unknown (Opts parse-leading %sed-options argv))))
+      (#t
       (let ((cmds (sed-parse (%sed-join-frags frags) ere)))
         (def gather
           (fn (self fs acc err?)
@@ -106,18 +135,21 @@
                  (gather files () #f)))
         (def text (string-concat (first g)))
         (def status (%sed-cycle cmds (%grep-lines text) quiet))
-        (if (rest g) 1 status)))))
+        (if (rest g) 1 status))))))
 
 ; Run the command line and DO NOT RETURN.
 (def sed-main
   (fn (_ raw-args)
     (def argv (sed-argv raw-args))
-    (def plan (%sed-parse-cli argv))
-    (def files (first (rest (rest (rest plan)))))
+    ; read stdin only when something will consume it: a line that runs,
+    ; with no file operands or a "-" among them
+    (def plan (if (Opts help? %sed-options argv) () (%sed-parse-cli argv)))
+    (def files (if (null? plan) () (first (rest (rest (rest plan))))))
     (def wants-stdin?
-      (if (null? files) #t
-        (let ((go (fn (self fs)
-                    (if (null? fs) #f
-                      (if (string=? (first fs) "-") #t (self (rest fs)))))))
-          (go files))))
+      (if (null? plan) #f
+        (if (null? files) #t
+          (let ((go (fn (self fs)
+                      (if (null? fs) #f
+                        (if (string=? (first fs) "-") #t (self (rest fs)))))))
+            (go files)))))
     (sys-exit (sed-run argv (if wants-stdin? (%grep-stdin!) "")))))
