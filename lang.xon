@@ -23,6 +23,6 @@
 ; sed's argv).
 (requires-lang "grep")
 
-(requires-release "v0.20.0")
+(requires-release "v0.22.0")
 
 (entry "run.x")
