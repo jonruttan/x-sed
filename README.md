@@ -17,7 +17,7 @@ groups; `-n`; `-e` fragments and `-f` script files; files as one stream
 loudly, recorded as pending: empty-`//` last-regex reuse, the hold
 space (h H g G x), multiline (N D P), a/i/c text, y///.
 
-Paired with x-lang v0.24.0 (`lang.xon` is the checkable row); requires
+Paired with x-lang v0.25.0 (`lang.xon` is the checkable row); requires
 the x-grep bundle beside it (or installed), from jonruttan/x-grep#13 on.
 
 ## Try it
