@@ -14,12 +14,12 @@
 ; This file contains no path literals. With operands, sed-main runs and exits;
 ; with no operands it is the x REPL with the core loaded, (sed-run ARGV INPUT)
 ; at a prompt.
-(import sed/base)
+(import sed/base sed-version sed-repl-print sed-argv sed-main)
 
 (set! %lang-name "SED")
 (set! %lang-version sed-version)
 (set! %repl-prompt "sed> ")
-(set! %repl-print %sed-repl-print)
+(set! %repl-print sed-repl-print)
 
 (unless (null? (sed-argv args))
   (sed-main args))
