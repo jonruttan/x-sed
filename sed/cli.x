@@ -14,6 +14,14 @@
 ; engine-flag stripping and the fd-3 stdin reclaim are grep's,
 ; imported.
 
+(module sed/cli)
+(import grep/prims byte-at byte-len substring string=? string-append string-concat
+  reverse file-read-all file-write file-exists? sys-exit)
+(import grep/cli grep-argv grep-stdin!)
+(import grep/core grep-lines)
+(import sed/parse sed-parse)
+(import sed/exec sed-cycle)
+
 (def sed-argv (fn (_ raw) (grep-argv raw)))
 
 ; The options, declared once: what the parse accepts, what --help prints and
@@ -134,7 +142,7 @@
                  (pair (list input) #f)
                  (gather files () #f)))
         (def text (string-concat (first g)))
-        (def status (%sed-cycle cmds (%grep-lines text) quiet))
+        (def status (sed-cycle cmds (grep-lines text) quiet))
         (if (rest g) 1 status))))))
 
 ; Run the command line and DO NOT RETURN.
@@ -152,4 +160,6 @@
                       (if (null? fs) #f
                         (if (string=? (first fs) "-") #t (self (rest fs)))))))
             (go files)))))
-    (sys-exit (sed-run argv (if wants-stdin? (%grep-stdin!) "")))))
+    (sys-exit (sed-run argv (if wants-stdin? (grep-stdin!) "")))))
+
+(provide sed/cli sed-argv sed-main sed-run)

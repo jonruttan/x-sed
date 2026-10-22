@@ -59,6 +59,7 @@ cat > "$OUT" <<EOF
 (def %install-root "$X_ROOT")
 (include "$X_BASE")
 $DEP_FORMS(import-path! "$BUNDLE")
-(import sed/base)
-(set! %repl-print %sed-repl-print)
+(import sed/base sed-run sed-repl-print)
+(import grep/prims file-close file-open-write file-read-all file-unlink file-write sys-dup2)
+(set! %repl-print sed-repl-print)
 EOF

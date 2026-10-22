@@ -7,22 +7,21 @@
 ; @license MIT No Attribution (MIT-0)
 ;
 ; The regex layer is grep's: (import grep/base) arms the escape-swap translator
-; (%grep-xlate), the byte doors, the line splitter and the File wrappers -- the
+; (grep-xlate), the byte doors, the line splitter and the File wrappers -- the
 ; flat global namespace makes a required lang's internals usable the moment its
 ; base is imported. Nothing under sed/ includes a platform module (x-lang#515).
 
-(import grep/base)
 
-(provide sed/base sed-version sed-parse sed-run
-  sed-argv sed-main %sed-repl-print)
+
+(module sed/base)
+(import sed/parse sed-parse)
+(import sed/cli sed-argv sed-main sed-run)
 
 (def sed-version "0.1.0")
 
-(def %sed-repl-print
+(def sed-repl-print
   (fn (_ result)
     (unless (null? result) (write result))
     (newline)))
 
-(include-once "./parse.x")
-(include-once "./exec.x")
-(include-once "./cli.x")
+(provide sed/base sed-version sed-repl-print sed-parse sed-run sed-argv sed-main)

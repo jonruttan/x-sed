@@ -14,6 +14,10 @@
 ; the x-awk performance laws.
 
 ; does ADDR select at (n, last?, line)?
+(module sed/exec)
+(import grep/prims byte-len substring string=? string-append string-concat length
+  reverse set-first! regex-search)
+
 (def %sed-addr?
   (fn (_ addr n last? line)
     (if (null? addr) #t
@@ -32,22 +36,22 @@
     (def a2 (first (rest (rest cmd))))
     (def neg (first (rest (rest (rest cmd)))))
     (def sel
-      (if (null? a2)
-        (%sed-addr? a1 n last? line)
-        (if (first box)
+      (match
+        ((null? a2) (%sed-addr? a1 n last? line))
+        ((first box)
           ; active: close on a2, still selected this line
           (do (if (%sed-addr? a2 n last? line)
                 (set-first! box #f)
                 ())
-              #t)
-          (if (%sed-addr? a1 n last? line)
-            (do (if (if (eq? (first a2) (lit line))
-                      (<= (first (rest a2)) n)
-                      #f)
-                  ()                                       ; one-line range
-                  (set-first! box #t))
-                #t)
-            #f))))
+              #t))
+        ((%sed-addr? a1 n last? line)
+          (do (if (if (eq? (first a2) (lit line))
+                    (<= (first (rest a2)) n)
+                    #f)
+                ()                                         ; one-line range
+                (set-first! box #t))
+              #t))
+        (#t #f)))
     (if neg (not sel) sel)))
 
 ; expand REPL-ITEMS against the match's groups alist
@@ -131,13 +135,14 @@
 (set! %sed-run-body
   (fn (_ body space-box n last? quiet)
     (let ((k (first body)))
-      (if (eq? k (lit p))
-        (do (display (string-append (first space-box) "\n")) ())
-        (if (eq? k (lit d)) (list (lit del))
-          (if (eq? k (lit q)) (list (lit quit))
-            (if (eq? k (lit block))
-              (%sed-run-cmds (first (rest body)) space-box n last? quiet)
-              ; subst
+      (match
+        ((eq? k (lit p))
+          (do (display (string-append (first space-box) "\n")) ()))
+        ((eq? k (lit d)) (list (lit del)))
+        ((eq? k (lit q)) (list (lit quit)))
+        ((eq? k (lit block))
+          (%sed-run-cmds (first (rest body)) space-box n last? quiet))
+        (#t                                                ; subst
               (let ((rx (first (rest body))))
                 (def items (first (rest (rest body))))
                 (def g (first (rest (rest (rest body)))))
@@ -153,10 +158,10 @@
                     (if (if pflag changed #f)
                       (display (string-append (first r) "\n"))
                       ())
-                    ())))))))))
+                    ())))))))
 
 ; the whole run: SCRIPT-CMDS over LINES; answers the exit status
-(def %sed-cycle
+(def sed-cycle
   (fn (_ cmds lines quiet)
     (def total (length lines))
     (def go
@@ -172,3 +177,5 @@
                     0
                     (self (rest ls) (+ n 1)))))))))
     (go lines 1)))
+
+(provide sed/exec sed-cycle)
