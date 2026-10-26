@@ -15,7 +15,7 @@
 
 (module sed/base)
 (import sed/parse sed-parse)
-(import sed/cli sed-argv sed-main sed-run)
+(import sed/cli sed-main sed-run)
 
 (def sed-version "0.1.0")
 
@@ -24,4 +24,4 @@
     (unless (null? result) (write result))
     (newline)))
 
-(provide sed/base sed-version sed-repl-print sed-parse sed-run sed-argv sed-main)
+(provide sed/base sed-version sed-repl-print sed-parse sed-run sed-main)

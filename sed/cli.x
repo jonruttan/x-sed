@@ -10,19 +10,17 @@
 ;   x -l sed -- --help
 ;
 ; The `--` lets sed's own options through x.sh's parsing (-n, -e, -f,
-; -E all collide); without it, place options after the script.  The
-; engine-flag stripping and the fd-3 stdin reclaim are grep's,
-; imported.
+; -E all collide); without it, place options after the script.  The fd-3
+; stdin reclaim is grep's, imported.  The operands are (Sys args 'program)
+; past the engine's path, which run.x hands sed-main.
 
 (module sed/cli)
 (import grep/prims byte-at byte-len substring string=? string-append string-concat
   reverse file-read-all file-write file-exists? sys-exit)
-(import grep/cli grep-argv grep-stdin!)
+(import grep/cli grep-stdin!)
 (import grep/core grep-lines)
 (import sed/parse sed-parse)
 (import sed/exec sed-cycle)
-
-(def sed-argv (fn (_ raw) (grep-argv raw)))
 
 ; The options, declared once: what the parse accepts, what --help prints and
 ; what a refusal prints.  busybox's sed help text, less the rows for the -i
@@ -147,8 +145,7 @@
 
 ; Run the command line and DO NOT RETURN.
 (def sed-main
-  (fn (_ raw-args)
-    (def argv (sed-argv raw-args))
+  (fn (_ argv)
     ; read stdin only when something will consume it: a line that runs,
     ; with no file operands or a "-" among them
     (def plan (if (Opts help? %sed-options argv) () (%sed-parse-cli argv)))
@@ -162,4 +159,4 @@
             (go files)))))
     (sys-exit (sed-run argv (if wants-stdin? (grep-stdin!) "")))))
 
-(provide sed/cli sed-argv sed-main sed-run)
+(provide sed/cli sed-main sed-run)
