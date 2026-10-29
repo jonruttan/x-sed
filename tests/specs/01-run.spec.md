@@ -242,3 +242,96 @@ zX
 ```
 ---
     1
+
+## bracket expressions
+
+The delimiter inside `[...]` is literal, as POSIX, GNU and BSD all read
+it; the scanner knows the bracket's own shape and nothing more.
+
+### the delimiter inside a bracket is literal
+
+```sed
+(display (sed-run (list "s/[/]/x/") "a/b\n"))
+```
+---
+```output
+axb
+0
+```
+
+### a negated bracket holding the delimiter
+
+```sed
+(display (sed-run (list "s/[^/]*$/X/") "a/b/c\n"))
+```
+---
+```output
+a/b/X
+0
+```
+
+### a named class beside the delimiter
+
+```sed
+(display (sed-run (list "s/[[:alpha:]/]/_/g") "x:y/z\n"))
+```
+---
+```output
+_:___
+0
+```
+
+### a regex address with the delimiter in a bracket
+
+```sed
+(display (sed-run (list "-n" "/[/]/p") "a/b\nab\n"))
+```
+---
+```output
+a/b
+0
+```
+
+### an escaped delimiter inside a bracket still unescapes
+
+```sed
+(display (sed-run (list "s/[\\/]/x/") "a/b\n"))
+```
+---
+```output
+axb
+0
+```
+
+### any delimiter, inside its bracket
+
+```sed
+(display (sed-run (list "s|[|]|x|") "a|b\n"))
+```
+---
+```output
+axb
+0
+```
+
+### a bracket holding [
+
+```sed
+(display (sed-run (list "s/[[]/x/") "a[b\n"))
+```
+---
+```output
+axb
+0
+```
+
+### the harness's import line
+
+```sed
+(display (sed-run (list "-n" "s/^(import \\([a-z0-9_/.-]*\\))/\\1/p") "(import lib/x/core/list)\nnope\n"))
+```
+---
+```output
+lib/x/core/list
+0
+```

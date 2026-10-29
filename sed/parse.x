@@ -19,7 +19,8 @@
 ; refused loudly, recorded as pending.
 
 (module sed/parse)
-(import grep/prims byte-at byte-len string-append string-concat reverse regex-compile)
+(import grep/prims byte-at byte-len substring string-append string-concat reverse
+  regex-compile)
 (import grep/bre grep-b->s grep-xlate)
 
 (def %sed-perr
@@ -29,23 +30,62 @@
 ; scan to the unescaped DELIM byte from i; \DELIM unescapes to DELIM,
 ; every other escape passes through untouched.  Answers (text . next-i)
 ; with next-i past the delimiter.
+;
+; In a regex (RE? on) a bracket expression is one unit: the delimiter
+; inside `[...]` is literal, as POSIX, GNU and BSD all read it, so
+; `s/[^/]*$//` and `[a-z/.-]` scan whole.  The walk knows the bracket's
+; own shape -- `]` right after `[` or `[^` is a member, `[:alpha:]`
+; `[=a=]` `[.a.]` are members up to their own closer -- and nothing else
+; about the regex; grep's translator reads the text after.
 (def %sed-scan-delim
-  (fn (_ s end delim i0)
+  (fn (_ s end delim i0 re?)
+    ; past the `]` that ends a [:class:], [=equiv=] or [.coll.] member of
+    ; KIND (`:` `=` `.`) whose text starts at j, or nil when the kind is
+    ; none of those or no closer follows
+    (def member-end
+      (fn (self j kind)
+        (match
+          ((not (if (= kind 58) #t (if (= kind 61) #t (= kind 46)))) ())
+          ((>= (+ j 1) end) ())
+          ((if (= (byte-at s j) kind) (= (byte-at s (+ j 1)) 93) #f) (+ j 2))
+          (#t (self (+ j 1) kind)))))
+    ; past the members that open a bracket at j: a `^`, then a `]` taken
+    ; as a member because nothing precedes it
+    (def bracket-head
+      (fn (_ j)
+        (def j2 (if (if (< j end) (= (byte-at s j) 94) #f) (+ j 1) j))
+        (if (if (< j2 end) (= (byte-at s j2) 93) #f) (+ j2 1) j2)))
     (def go
-      (fn (self i acc)
+      (fn (self i acc in?)
         (if (>= i end)
           (%sed-perr "unterminated s/// or address regex")
           (let ((b (byte-at s i)))
-            (if (= b delim)
-              (pair (string-concat (reverse acc)) (+ i 1))
-              (if (if (= b 92) (< (+ i 1) end) #f)
+            (match
+              ; the delimiter, outside a bracket: done
+              ((if (= b delim) (not in?) #f)
+                (pair (string-concat (reverse acc)) (+ i 1)))
+              ; \DELIM unescapes, any other escape passes through
+              ((if (= b 92) (< (+ i 1) end) #f)
                 (let ((e (byte-at s (+ i 1))))
                   (if (= e delim)
-                    (self (+ i 2) (pair (grep-b->s delim) acc))
+                    (self (+ i 2) (pair (grep-b->s delim) acc) in?)
                     (self (+ i 2)
-                      (pair (string-append "\\" (grep-b->s e)) acc))))
-                (self (+ i 1) (pair (grep-b->s b) acc))))))))
-    (go i0 ())))
+                      (pair (string-append "\\" (grep-b->s e)) acc) in?))))
+              ; ] closes the bracket
+              ((if in? (= b 93) #f)
+                (self (+ i 1) (pair "]" acc) #f))
+              ; [: [= [. inside: a member up to its own closer
+              ((if in? (if (= b 91) (< (+ i 1) end) #f) #f)
+                (let ((close (member-end (+ i 2) (byte-at s (+ i 1)))))
+                  (if (null? close)
+                    (self (+ i 1) (pair "[" acc) #t)
+                    (self close (pair (substring s i close) acc) #t))))
+              ; [ opens, in a regex
+              ((if re? (if in? #f (= b 91)) #f)
+                (let ((j (bracket-head (+ i 1))))
+                  (self j (pair (substring s i j) acc) #t)))
+              (#t (self (+ i 1) (pair (grep-b->s b) acc) in?)))))))
+    (go i0 () #f)))
 
 ; the replacement text to items: & is the match, \\N a group, \\& a
 ; literal &, \\\\ a backslash, \\n a newline; anything else literal
@@ -86,7 +126,7 @@
           ((= b 36)                                        ; $
             (pair (list (lit last)) (+ i 1)))
           ((= b 47)                                        ; /re/
-            (let ((r (%sed-scan-delim s end 47 (+ i 1))))
+            (let ((r (%sed-scan-delim s end 47 (+ i 1) #t)))
               (if (= (byte-len (first r)) 0)
                 (%sed-perr "empty // (last-regex reuse is pending)")
                 (pair
@@ -128,8 +168,8 @@
             ((= c 115)                                     ; s
               (if (>= (+ i3 1) end) (%sed-perr "s needs a delimiter")
                 (let ((delim (byte-at s (+ i3 1))))
-                  (def re-r (%sed-scan-delim s end delim (+ i3 2)))
-                  (def repl-r (%sed-scan-delim s end delim (rest re-r)))
+                  (def re-r (%sed-scan-delim s end delim (+ i3 2) #t))
+                  (def repl-r (%sed-scan-delim s end delim (rest re-r) #f))
                   (if (= (byte-len (first re-r)) 0)
                     (%sed-perr "empty s regex (last-regex reuse is pending)")
                     (let ((flags (fn (self j g p occ)
