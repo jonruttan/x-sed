@@ -140,7 +140,9 @@
                  (pair (list input) #f)
                  (gather files () #f)))
         (def text (string-concat (first g)))
-        (def status (sed-cycle cmds (grep-lines text) quiet))
+        (def tlen (byte-len text))
+        (def bare? (if (> tlen 0) (not (= (byte-at text (- tlen 1)) 10)) #f))
+        (def status (sed-cycle cmds (grep-lines text) quiet bare?))
         (if (rest g) 1 status))))))
 
 ; Run the command line and DO NOT RETURN.

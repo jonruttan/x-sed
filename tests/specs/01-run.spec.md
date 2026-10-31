@@ -335,3 +335,77 @@ axb
 lib/x/core/list
 0
 ```
+
+## a last line without a newline
+
+The output ends the way the input did.  When that line is written more
+than once, the held-back newline goes between the writes (GNU, busybox).
+
+### auto-print keeps it missing
+
+```sed
+(display (sed-run (list "s/a/b/") "x\na"))
+```
+---
+```output
+x
+b0
+```
+
+### -n with p keeps it missing
+
+```sed
+(display (sed-run (list "-n" "p") "x\na"))
+```
+---
+```output
+x
+a0
+```
+
+### p then auto-print puts the newline between
+
+```sed
+(display (sed-run (list "p") "x\na"))
+```
+---
+```output
+x
+x
+a
+a0
+```
+
+### s///p then auto-print puts the newline between
+
+```sed
+(display (sed-run (list "s/a/b/p") "a"))
+```
+---
+```output
+b
+b0
+```
+
+### $d writes nothing for it
+
+```sed
+(display (sed-run (list "$d") "x\na"))
+```
+---
+```output
+x
+0
+```
+
+### a newline-ended input keeps its newline
+
+```sed
+(display (sed-run (list "p") "a\n"))
+```
+---
+```output
+a
+a
+0
+```
