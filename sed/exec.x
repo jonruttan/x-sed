@@ -15,7 +15,7 @@
 
 ; does ADDR select at (n, last?, line)?
 (module sed/exec)
-(import grep/prims byte-len substring string=? string-append string-concat length
+(import grep/prims byte-len substring string=? string-concat
   reverse set-first! regex-search)
 
 (def %sed-addr?
@@ -117,31 +117,44 @@
 
 (def regex-match-groups (fn (_ s rx) (Regex match-groups s rx)))
 
+; write TEXT as one output line.  OUT is (pending? bare?): bare? is on
+; while the cycle holds a last line that had no newline, and that line's
+; newline is held back as pending -- written only if more output follows,
+; so the output ends the way the input did (GNU and busybox; BSD drops
+; the newline after every write of that line)
+(def %sed-emit
+  (fn (_ out text)
+    (do (if (first out) (display "\n") ())
+        (display text)
+        (if (first (rest out))
+          (set-first! out #t)
+          (display "\n")))))
+
 ; run BODY against the space box; answers () | (lit del) | (lit quit)
 (def %sed-run-body ())
 (def %sed-run-cmds
-  (fn (self cmds space-box n last? quiet)
+  (fn (self cmds space-box n last? out)
     (if (null? cmds) ()
       (let ((cmd (first cmds)))
         (def c
           (if (%sed-selected? cmd n last? (first space-box))
             (%sed-run-body (first (rest (rest (rest (rest cmd)))))
-              space-box n last? quiet)
+              space-box n last? out)
             ()))
         (if (null? c)
-          (self (rest cmds) space-box n last? quiet)
+          (self (rest cmds) space-box n last? out)
           c)))))
 
 (set! %sed-run-body
-  (fn (_ body space-box n last? quiet)
+  (fn (_ body space-box n last? out)
     (let ((k (first body)))
       (match
         ((eq? k (lit p))
-          (do (display (string-append (first space-box) "\n")) ()))
+          (do (%sed-emit out (first space-box)) ()))
         ((eq? k (lit d)) (list (lit del)))
         ((eq? k (lit q)) (list (lit quit)))
         ((eq? k (lit block))
-          (%sed-run-cmds (first (rest body)) space-box n last? quiet))
+          (%sed-run-cmds (first (rest body)) space-box n last? out))
         (#t                                                ; subst
               (let ((rx (first (rest body))))
                 (def items (first (rest (rest body))))
@@ -156,23 +169,25 @@
                 ; sed, a recorded divergence for s///p only
                 (do (set-first! space-box (first r))
                     (if (if pflag changed #f)
-                      (display (string-append (first r) "\n"))
+                      (%sed-emit out (first r))
                       ())
                     ())))))))
 
-; the whole run: SCRIPT-CMDS over LINES; answers the exit status
+; the whole run: SCRIPT-CMDS over LINES; answers the exit status.
+; BARE? when the input's last line had no newline.
 (def sed-cycle
-  (fn (_ cmds lines quiet)
-    (def total (length lines))
+  (fn (_ cmds lines quiet bare?)
+    (def out (list #f #f))
     (def go
       (fn (self ls n)
         (if (null? ls) 0
           (let ((space-box (list (first ls))))
-            (def c (%sed-run-cmds cmds space-box n (null? (rest ls)) quiet))
+            (def last? (null? (rest ls)))
+            (set-first! (rest out) (if last? bare? #f))
+            (def c (%sed-run-cmds cmds space-box n last? out))
             (if (eq? (if (null? c) () (first c)) (lit del))
               (self (rest ls) (+ n 1))
-              (do (if quiet ()
-                    (display (string-append (first space-box) "\n")))
+              (do (if quiet () (%sed-emit out (first space-box)))
                   (if (eq? (if (null? c) () (first c)) (lit quit))
                     0
                     (self (rest ls) (+ n 1)))))))))
