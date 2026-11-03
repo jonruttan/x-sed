@@ -233,7 +233,7 @@ zX
 (sed-run (list "s//x/") "a\n")
 ```
 ---
-    Error: #<err:sed sed: empty s regex (last-regex reuse is pending)>
+    Error: sed: sed: empty s regex (last-regex reuse is pending)
 
 ### a missing file is status 1
 
