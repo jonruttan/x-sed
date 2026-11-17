@@ -76,6 +76,7 @@ The harness loads the x-grep bundle the way the wrapper does.
                       expression compiles through x-grep's translator
     sed/exec.x        the cycle: addresses, ranges, s///, the commands
     sed/cli.x         options, files, standard input, and sed-main
+    sed/syntax.x      the sed highlighting grammar x/tool/syntax colours with
     tests/            markdown specs, run by the platform's runner
 
 ## Licence
