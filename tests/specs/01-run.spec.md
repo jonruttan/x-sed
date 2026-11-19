@@ -225,6 +225,40 @@ zX
 0
 ```
 
+### a # line is a comment
+
+```sed
+(display (sed-run (list "# first\ns/a/X/\n# last") "a\nb\n"))
+```
+---
+```output
+X
+b
+0
+```
+
+### a comment inside braces
+
+```sed
+(display (sed-run (list "-n" "1{\n# inside\np\n}") "a\nb\n"))
+```
+---
+```output
+a
+0
+```
+
+### a # inside s/// is not a comment
+
+```sed
+(display (sed-run (list "s/#/-/") "a#b\n"))
+```
+---
+```output
+a-b
+0
+```
+
 ## the refusals and the status
 
 ### an empty s regex refuses loudly

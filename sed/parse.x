@@ -136,13 +136,22 @@
                   (rest r)))))
           (#t (pair () i)))))))
 
+; the index of the newline that ends a comment, or end
+(def %sed-comment-end
+  (fn (self s end i)
+    (if (>= i end) i
+      (if (= (byte-at s i) 10) i (self s end (+ i 1))))))
+
+; between commands: blanks, newlines, `;`, and a `#` comment to its newline
 (def %sed-ws-skip
   (fn (self s end i)
     (if (>= i end) i
       (let ((b (byte-at s i)))
-        (if (match ((= b 32) #t) ((= b 9) #t) ((= b 10) #t) (#t (= b 59)))
-          (self s end (+ i 1))
-          i)))))
+        (match
+          ((= b 35) (self s end (%sed-comment-end s end i)))
+          ((match ((= b 32) #t) ((= b 9) #t) ((= b 10) #t) (#t (= b 59)))
+            (self s end (+ i 1)))
+          (#t i))))))
 
 ; one command at i (addresses parsed); answers (CMD . next-i)
 (def %sed-parse-cmd ())
