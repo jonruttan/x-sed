@@ -66,7 +66,7 @@
 (def %sed-script-file
   (fn (_ path)
     (if (file-exists? path) (file-read-all path)
-      (Err raise (lit sed) (string-append "sed: can't open script file " path) ()))))
+      (Err raise (lit sed) (string-append "can't open script file " path) ()))))
 
 ; The line refused, as busybox's sed refuses it: musl getopt's line naming the
 ; option, or nothing when there was no script, then the usage text, on
