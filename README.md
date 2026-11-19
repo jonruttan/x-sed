@@ -15,7 +15,7 @@ comes from a real sed run.
 
 ## Status
 
-Pre-release: no release has been cut. Paired with x-lang v0.55.0
+Pre-release: no release has been cut. Paired with x-lang v0.57.0
 (`lang.xon` is the checkable row). It requires
 [x-grep](https://github.com/jonruttan/x-grep), installed or beside it:
 `(requires-lang "grep")` loads x-grep as a library, and the BRE
