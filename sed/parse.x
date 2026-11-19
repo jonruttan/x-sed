@@ -25,7 +25,7 @@
 
 (def %sed-perr
   (fn (_ msg)
-    (Err raise (lit sed) (string-append "sed: " msg) ())))
+    (Err raise (lit sed) msg ())))
 
 ; scan to the unescaped DELIM byte from i; \DELIM unescapes to DELIM,
 ; every other escape passes through untouched.  Answers (text . next-i)
