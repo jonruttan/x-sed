@@ -26,7 +26,7 @@ translation and the line reading are x-grep's.
 - **`s///`** with any delimiter, the `g` and `p` flags and an Nth
   occurrence, and `&` and `\1` to `\9` in the replacement.
 - **Addresses:** line numbers, `$`, `/re/`, two-address ranges, and `!`.
-- **Commands:** `p`, `d`, `q`, and `{ }` groups.
+- **Commands:** `p`, `d`, `q`, and `{ }` groups; `#` starts a comment.
 - **Options:** `-n`, `-E` (and `-r`), `-e` fragments and `-f` script
   files, in the order given.
 - **Files** are one stream: line numbers continue across them, and `$`
@@ -63,6 +63,10 @@ options of sed's needs no `--`.
 
     make test           # the suite
     make check          # the suite against tests/contract/known-failures.txt
+    make card           # docs/card.md: its format, and every script run
+
+[docs/card.md](docs/card.md) is the reference page: the language's names in
+tables, and sed scripts that are run, each beside what it prints.
 
 `(sed-run ARGV INPUT-TEXT)` is the core, and the suite calls it directly.
 The harness loads the x-grep bundle the way the wrapper does.
