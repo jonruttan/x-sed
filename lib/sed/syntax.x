@@ -225,9 +225,6 @@
   (let ((g (Syntax make (lit sed) (sed-syntax-rules)
              (list (pair (lit line) %sed-sx-line-class)))))
     (g sync (fn (_ s ls) #t))
-    ; A newline ends the text, which ends a last line's run; the default
-    ; space would be read into it.
-    (g end "\n")
     g))
 
 (provide sed/syntax sed-syntax-rules sed-syntax-commands)
