@@ -9,7 +9,7 @@
 ; @copyright 2026 Jon Ruttan
 ; @license MIT No Attribution (MIT-0)
 ;
-; lang.xon's (grammar sed ...) form names this module, and x/tool/syntax
+; bundle.xon's (grammar sed ...) form names this module, and x/tool/syntax
 ; imports it the first time a file needs the grammar, in whatever process is
 ; colouring: vi's, a REPL's, an HTML renderer's.  So it imports x-lang
 ; libraries only, never the interpreter.  It colours POSIX sed and GNU's
@@ -225,9 +225,6 @@
   (let ((g (Syntax make (lit sed) (sed-syntax-rules)
              (list (pair (lit line) %sed-sx-line-class)))))
     (g sync (fn (_ s ls) #t))
-    ; A newline ends the text, which ends a last line's run; the default
-    ; space would be read into it.
-    (g end "\n")
     g))
 
 (provide sed/syntax sed-syntax-rules sed-syntax-commands)

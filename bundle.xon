@@ -1,13 +1,13 @@
-; lang.xon -- what this bundle IS.
+; bundle.xon -- what this bundle IS.
 ;
 ; FORMAT (one form per line):
-;   (lang "NAME")                the -l name
+;   (name "NAME")                the -l name
 ;   (dialect NAME)               he | xe | rn -- a REQUIREMENT, not a taste
-;   (requires-lang "NAME")       another lang this one is written on top of
+;   (requires-bundle "NAME")     another bundle this one is written on top of
 ;   (requires-release "TAG")     the x-lang this bundle was built against
-;   (entry "FILE")               loaded AFTER the dialect, not instead of it
+;   (entry NAME)                 the module sed/NAME, imported after the dialect; its main starts it
 
-(lang "sed")
+(name "sed")
 
 ; RADON for File, like the other tools of the arc.
 ; HELIUM, plus exactly the libraries this bundle imports and nothing
@@ -19,13 +19,13 @@
 
 ; sed's regex layer is grep's: the BRE escape-swap translator and the byte
 ; doors ride in via grep/base, which x.sh arms as a library (import paths only;
-; a required lang's entry never runs, so grep's operand dispatch cannot hijack
+; a required bundle's entry is never started, so grep's operand dispatch cannot hijack
 ; sed's argv).
-(requires-lang "grep")
+(requires-bundle "grep")
 
-(requires-release "v0.59.0")
+(requires-release "v0.62.0")
 
-(entry "run.x")
+(entry run)
 
 ; The sed grammar, for any process that colours a file: sed/syntax imports
 ; x-lang libraries only.

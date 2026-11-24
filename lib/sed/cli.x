@@ -12,7 +12,7 @@
 ; The `--` lets sed's own options through x.sh's parsing (-n, -e, -f,
 ; -E all collide); without it, place options after the script.  The fd-3
 ; stdin reclaim is grep's, imported.  The operands are (Sys args 'program)
-; past the engine's path, which run.x hands sed-main.
+; past the engine's path, which sed/run's main hands sed-main.
 
 (module sed/cli)
 (import grep/prims byte-at byte-len substring string=? string-append string-concat

@@ -18,19 +18,19 @@ OUT="$BUNDLE/tests/lib/harness.gen.x"
 
 mkdir -p "$BUNDLE/tests/lib"
 
-# The required langs, read from the manifest: x.sh resolves (requires-lang ...)
+# The required bundles, read from the manifest: x.sh resolves (requires-bundle ...)
 # itself, and the harness repeats the resolution from the same rows. Both
 # layouts are probed -- an install names the directory after the lang, a
 # checkout after the repository. The version, when a row has one, is ignored
 # here: this harness runs against working trees.
 DEP_ROOTS=
-for _req in $(sed -n 's/^(requires-lang "\([^"]*\)".*/\1/p' "$BUNDLE/lang.xon"); do
+for _req in $(sed -n 's/^(requires-bundle "\([^"]*\)".*/\1/p' "$BUNDLE/bundle.xon"); do
 	_root=
 	for _c in "$BUNDLE/../$_req" "$BUNDLE/../x-$_req"; do
-		if [ -f "$_c/lang.xon" ]; then _root="$(cd "$_c" && pwd)"; break; fi
+		if [ -f "$_c/bundle.xon" ]; then _root="$(cd "$_c" && pwd)"; break; fi
 	done
 	if [ -z "$_root" ]; then
-		echo "x-sed: lang '$_req' is required but not beside this bundle" >&2
+		echo "x-sed: bundle '$_req' is required but not beside this bundle" >&2
 		echo "  looked for $_req/ and x-$_req/ next to $BUNDLE" >&2
 		exit 1
 	fi
@@ -39,7 +39,7 @@ done
 
 DEP_FORMS=
 for _d in $DEP_ROOTS; do
-	DEP_FORMS="$DEP_FORMS(import-path! \"$_d\")
+	DEP_FORMS="$DEP_FORMS(import-path! \"$_d/lib\")
 "
 done
 
@@ -58,7 +58,7 @@ cat > "$OUT" <<EOF
 ; commit: the absolute paths below are facts of this machine.
 (def %install-root "$X_ROOT")
 (include "$X_BASE")
-$DEP_FORMS(import-path! "$BUNDLE")
+$DEP_FORMS(import-path! "$BUNDLE/lib")
 (import sed/base sed-run sed-repl-print)
 (import grep/prims file-close file-open-write file-read-all file-unlink file-write sys-dup2)
 (set! %repl-print sed-repl-print)

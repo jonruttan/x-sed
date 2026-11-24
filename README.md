@@ -16,9 +16,9 @@ comes from a real sed run.
 ## Status
 
 Pre-release: no release has been cut. Paired with x-lang v0.59.0
-(`lang.xon` is the checkable row). It requires
+(`bundle.xon` is the checkable row). It requires
 [x-grep](https://github.com/jonruttan/x-grep), installed or beside it:
-`(requires-lang "grep")` loads x-grep as a library, and the BRE
+`(requires-bundle "grep")` loads x-grep as a library, and the BRE
 translation and the line reading are x-grep's.
 
 ## What it does
@@ -47,7 +47,7 @@ Options come before the script: they stop at the first operand.
 
 ## Install
 
-It needs x-lang at the release `lang.xon` declares, and x-grep installed
+It needs x-lang at the release `bundle.xon` declares, and x-grep installed
 first.
 
     make install        # into the x on PATH
@@ -73,15 +73,15 @@ The harness loads the x-grep bundle the way the wrapper does.
 
 ## Layout
 
-    lang.xon          what the bundle is, with (requires-lang "grep")
-    run.x             the entry
-    sed/base.x        the parts, assembled
-    sed/parse.x       script text to compiled commands; a regular
-                      expression compiles through x-grep's translator
-    sed/exec.x        the cycle: addresses, ranges, s///, the commands
-    sed/cli.x         options, files, standard input, and sed-main
-    sed/syntax.x      the sed highlighting grammar x/tool/syntax colours with
-    tests/            markdown specs, run by the platform's runner
+    bundle.xon            what the bundle is, with (requires-bundle "grep")
+    lib/sed/run.x         the entry
+    lib/sed/base.x        the parts, assembled
+    lib/sed/parse.x       script text to compiled commands; a regular
+                          expression compiles through x-grep's translator
+    lib/sed/exec.x        the cycle: addresses, ranges, s///, the commands
+    lib/sed/cli.x         options, files, standard input, and sed-main
+    lib/sed/syntax.x      the sed highlighting grammar x/tool/syntax colours with
+    tests/                markdown specs, run by the platform's runner
 
 ## Licence
 

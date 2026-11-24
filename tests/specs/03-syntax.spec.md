@@ -2,27 +2,27 @@
 
 ## sed/syntax -- the sed highlighting grammar
 
-The bundle's lang.xon declares a grammar, `sed`, that x/tool/syntax colours
+The bundle's bundle.xon declares a grammar, `sed`, that x/tool/syntax colours
 sed scripts with. Its module, `sed/syntax`, imports x-lang libraries only,
 and registers the grammar as it loads.
 
 The cases share one process, and a registered grammar stays registered, so
-the catalogue's case comes first: it finds the grammar through lang.xon,
+the catalogue's case comes first: it finds the grammar through bundle.xon,
 before anything has imported the module.
 
 ### the catalogue finds sed by suffix, by #! and by modeline
 
 ```sed
 (do (import x/sys/posix) (import x/sys/file) (import x/tool/syntax)
-    (def root (Str8 replace "/sed/syntax.x" "" (%module-resolve-file "sed/syntax.x")))
+    (def root (Str8 replace "/lib/sed/syntax.x" "" (%module-resolve-file "sed/syntax.x")))
     (def tmp (File temp "/tmp/x-sed-spec-langs-"))
     (File close (first tmp))
     (def d (rest tmp))
     (File unlink d)
     (File mkdir d)
     (File symlink root (Str8 append d "/sed"))
-    (def was (Sys getenv "X_LANG_DIR"))
-    (Sys setenv "X_LANG_DIR" d)
+    (def was (Sys getenv "X_BUNDLE_DIR"))
+    (Sys setenv "X_BUNDLE_DIR" d)
     (Syntax forget!)
     (def row (List find (fn (_ r) (eq? (first r) (lit sed))) (Syntax catalogue)))
     (def name (fn (_ path . text)
@@ -36,7 +36,7 @@ before anything has imported the module.
             (let ((g (Syntax named (lit sed)))) (list (g files) (g interpreters)))))
     (File unlink (Str8 append d "/sed"))
     (File rmdir d)
-    (Sys setenv "X_LANG_DIR" (if (null? was) "" was))
+    (Sys setenv "X_BUNDLE_DIR" (if (null? was) "" was))
     (Syntax forget!)
     (write seen))
 ```
